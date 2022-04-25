@@ -6,6 +6,8 @@ const submit = document.querySelector<HTMLButtonElement>("#submit")!;
 const header = document.querySelector<HTMLHeadingElement>("#prompt")!;
 const text = document.querySelector<HTMLTextAreaElement>("#input")!;
 const app = document.querySelector<HTMLDivElement>("#app")!;
+const initialMusic = document.querySelector<HTMLAudioElement>("#initialMusic")!;
+const musicLoop = document.querySelector<HTMLAudioElement>("#musicLoop")!;
 
 // 20 seconds
 const INTERVAL = 20 * 1000;
@@ -31,8 +33,13 @@ localforage.config({
 
 const ls = localforage;
 const DEFAULT_HEAD = "Hi. Welcome to Catharsis.";
+
+const displayText = (text: string) => {
+  header.innerText = text;
+};
+
 const init = async () => {
-  header.innerText = DEFAULT_HEAD;
+  displayText(DEFAULT_HEAD);
   if (!(await ls.getItem(ENTRIES_KEY))) {
     ls.setItem(ENTRIES_KEY, []);
   }
@@ -84,12 +91,12 @@ const stopTime = () => {
   if (time) {
     clearTimeout(time);
   }
-}
+};
 
 const resetTime = () => {
-  stopTime()
+  stopTime();
   time = setTimeout(() => {
-    header.innerText = CONTINUE;
+    displayText(CONTINUE);
   }, INTERVAL) as unknown as number;
 };
 
@@ -101,7 +108,7 @@ const next = async () => {
     text.addEventListener(
       "keypress",
       () => {
-        resetTime()
+        resetTime();
       },
       { signal: ac.signal }
     );
@@ -116,12 +123,22 @@ const next = async () => {
     currentQ = -1;
     await endEntry(currentE);
     currentE = -1;
-    header.innerText = DEFAULT_HEAD;
+    displayText(DEFAULT_HEAD);
+
     return;
   }
-  resetTime()
-  header.innerText = questions[currentQ];
+  resetTime();
+  displayText(questions[currentQ]);
 };
 
 await init();
 button.addEventListener("click", next);
+
+
+initialMusic.addEventListener(
+  "ended",
+  () => {
+    musicLoop.play();
+  },
+  { once: true }
+);
