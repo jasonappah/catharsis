@@ -30,7 +30,7 @@ localforage.config({
 });
 
 const ls = localforage;
-const DEFAULT_HEAD= "Hi. Welcome to Catharsis."
+const DEFAULT_HEAD = "Hi. Welcome to Catharsis.";
 const init = async () => {
   header.innerText = DEFAULT_HEAD;
   if (!(await ls.getItem(ENTRIES_KEY))) {
@@ -77,23 +77,49 @@ const endEntry = async (id: number) => {
 
 let currentQ = -1;
 let currentE = -1;
+let ac = new AbortController();
+let time: number;
+
+const stopTime = () => {
+  if (time) {
+    clearTimeout(time);
+  }
+}
+
+const resetTime = () => {
+  stopTime()
+  time = setTimeout(() => {
+    header.innerText = CONTINUE;
+  }, INTERVAL) as unknown as number;
+};
 
 const next = async () => {
   if (currentQ === -1) {
     currentE = await addNewEntry();
+    ac = new AbortController();
+
+    text.addEventListener(
+      "keypress",
+      () => {
+        resetTime()
+      },
+      { signal: ac.signal }
+    );
   } else {
     await addQA(currentE, questions[currentQ], text.value);
   }
 
   text.value = "";
   if (++currentQ >= questions.length) {
+    ac.abort();
+    stopTime();
     currentQ = -1;
     await endEntry(currentE);
     currentE = -1;
-    header.innerText=DEFAULT_HEAD
+    header.innerText = DEFAULT_HEAD;
     return;
   }
-
+  resetTime()
   header.innerText = questions[currentQ];
 };
 
